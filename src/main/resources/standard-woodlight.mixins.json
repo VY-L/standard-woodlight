@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "vy.woodlightstd.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "LavaMixin",
+    "MinecraftServerMixin",
+    "WorldMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+	}
+}
