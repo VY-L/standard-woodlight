@@ -11,12 +11,16 @@ import net.minecraft.world.WorldAccess;
 import java.util.Iterator;
 
 public class PotentialPortalManager {
+    public static long totalTime = 0;
+    public static int callCount = 0;
     public static void tickCounters(WorldAccess worldAccess) {
         for(PotentialPortal portal: StandardWoodlight.POTENTIAL_PORTALS)
-            if (portal.tick(worldAccess))
-                worldAccess.setBlockState(portal.lowerCorner.up(), Blocks.FIRE.getDefaultState(), 0b00000011);
+            portal.tick(worldAccess);
+//            if (portal.tick(worldAccess))
+//                worldAccess.setBlockState(portal.lowerCorner.up(), Blocks.FIRE.getDefaultState(), 0b00000011);
     }
     public static void updatePotentialPortals(WorldAccess worldAccess, BlockState state1, BlockState state2, BlockPos pos) {
+        long time = System.nanoTime();
         int portalCount = StandardWoodlight.POTENTIAL_PORTALS.size();
         // Remove Portals
         if (worldAccess.isClient())
@@ -34,14 +38,15 @@ public class PotentialPortalManager {
         }
         // TODO: check for added portals
         if (state2.isOf(Blocks.OBSIDIAN) && !state1.isOf(Blocks.OBSIDIAN)) {
+            System.out.println("Obsidian is placed");
 //            System.out.println(" ");
 //            System.out.println("Obsidian placed at " + pos + ", checking for potential portals...");
             // FIXME: I am using arbitrary "22", not sure specifically what to set to
             // region side obsidian
 
             // check vertical column
-            BlockPos colTop = pos;
-            BlockPos colBottom = pos;
+            BlockPos colTop = pos.offset(Direction.UP, 22);
+            BlockPos colBottom = pos.offset(Direction.DOWN, 22);
             for(int i = 0; i < 22; i++) {
                 if (!worldAccess.getBlockState(pos.offset(Direction.UP, i)).isOf(Blocks.OBSIDIAN)) {
                     colTop = pos.offset(Direction.UP, i); // note that this position is already not obsidian
@@ -56,6 +61,7 @@ public class PotentialPortalManager {
             }
 //            System.out.println("Vertical obsidian column from " + colBottom + " to " + colTop);
             if (colTop.getY() - colBottom.getY() > 3) {
+                System.out.println("Found vertical obsidian column of height " + (colTop.getY() - colBottom.getY() + 1));
                 for (Direction direction : Direction.Type.HORIZONTAL) {
 //                    System.out.println("Checking direction " + direction);
                     // enumerate possible bottom & top positions
@@ -126,8 +132,8 @@ public class PotentialPortalManager {
             // endregion
 
             // region east west
-            BlockPos eastCorner = pos;
-            BlockPos westCorner = pos;
+            BlockPos eastCorner = pos.offset(Direction.EAST, 22);
+            BlockPos westCorner = pos.offset(Direction.WEST, 22);
             for(int i = 0; i < 22; i++) {
                 if (!worldAccess.getBlockState(pos.offset(Direction.EAST, i)).isOf(Blocks.OBSIDIAN)) {
                     eastCorner = pos.offset(Direction.EAST, i); // note that this position is already not obsidian
@@ -220,8 +226,8 @@ public class PotentialPortalManager {
             }
             // endregion
             // region north south
-            BlockPos southCorner = pos;
-            BlockPos northCorner = pos;
+            BlockPos southCorner = pos.offset(Direction.SOUTH, 22);
+            BlockPos northCorner = pos.offset(Direction.NORTH, 22);
             for(int i = 0; i < 22; i++) {
                 if (!worldAccess.getBlockState(pos.offset(Direction.SOUTH, i)).isOf(Blocks.OBSIDIAN)) {
                     southCorner = pos.offset(Direction.SOUTH, i); // note that this position is already not obsidian
@@ -327,5 +333,8 @@ public class PotentialPortalManager {
         int delta = newCount - portalCount;
         if (newCount != portalCount)
             System.out.println("Potential portal count is now " + newCount + " (" + (newCount>0?"+":"") + delta + ")");
+        callCount++;
+        totalTime += (System.nanoTime() - time);
+        System.out.println("Currently used " + totalTime/1000000 + "ms to run" + callCount + "calls");
     }
 }
